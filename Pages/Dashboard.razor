@@ -1,0 +1,75 @@
+@page "/dashboard"
+
+<link rel="stylesheet" href="css/index.css">
+<div class="cardBox">
+    <a href="Clientes">
+        <div class="card">
+            <div>
+                <div class="card-number"> @TotalOfCustomers</div>
+                <div class="card-name"> Total de clientes</div>
+            </div>
+            <div class="card-icon">
+                <span class="oi oi-people"></span>
+            </div>
+        </div>
+    </a>
+    <a href="Servicios">
+        <div class="card">
+            <div>
+                <div class="card-number"> @TotalOfServicios</div>
+                <div class="card-name"> Total de servicios</div>
+            </div>
+            <div class="card-icon">
+                <span class="oi oi-box"></span>
+            </div>
+        </div>
+    </a>
+    <a href="Empleados">
+    <div class="card">
+        <div>
+            <div class="card-number"> @GlobalUserCounter</div>
+            <div class="card-name"> Total de empleados</div>
+        </div>
+        <div class="card-icon">
+            <span class="oi oi-person"></span>
+        </div>
+    </div>
+    </a>
+</div>
+<div class="container">
+    <div class="recents">
+        <div class="cases-card-header">
+            <h2>Cistas pendientes</h2>
+            <div class="btnBar">
+                    <a href="Citas" class="btn btn-showAll"> Mostrar todas las citas</a>
+            </div>
+        </div>
+        <Datagrind table=@CitasTable></Datagrind>
+    </div>
+</div>
+
+@code{
+    string TotalOfCustomers = "0"; 
+    string GlobalUserCounter = "0"; 
+    string TotalOfServicios = "0"; 
+    
+    System.Data.DataTable CitasTable;
+
+    protected async override Task OnInitializedAsync(){
+        MySql.Data.MySqlClient.MySqlDataReader tmp = dbaccess.ReadDataThroughtReader("SELECT COUNT(*) AS CANTIDAD FROM Clientes");
+
+        while(tmp.Read()){ TotalOfCustomers = tmp["CANTIDAD"].ToString(); }
+        tmp.Close();
+
+        tmp = dbaccess.ReadDataThroughtReader("SELECT COUNT(*) AS CANTIDAD FROM Servicios");
+        while(tmp.Read()){ TotalOfServicios = tmp["CANTIDAD"].ToString(); }
+        tmp.Close();
+
+        
+        tmp = dbaccess.ReadDataThroughtReader("SELECT COUNT(*) AS CANTIDAD FROM Empleados");
+        while(tmp.Read()){ GlobalUserCounter = tmp["CANTIDAD"].ToString(); }
+        tmp.Close();
+
+        CitasTable = dbaccess.ReadDataThroughtAdapter("SELECT citas.id AS ID, empleados.nombre AS Empleado, clientes.nombre AS Cliente, Estadoscitas.nombre AS Estado, fecha AS 'Fecha y Hora'  FROM clientes,Estadoscitas, citas, empleados WHERE empleados.id = citas.empleado AND clientes.id = citas.cliente AND citas.estado = 2 AND Estadoscitas.id = citas.estado ORDER BY ID DESC LIMIT 10");
+    }
+}

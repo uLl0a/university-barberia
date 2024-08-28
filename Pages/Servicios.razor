@@ -1,0 +1,147 @@
+@page "/Servicios"
+@using System.Collections;
+@using MySql.Data.MySqlClient;
+
+<link rel="stylesheet" href="css/index.css">
+<div class="container">
+    <div class="recents">
+        <div class="cases-card-header">
+            <h2>Lista de servicios</h2>
+            <div class="btnBar">
+                <button class="btn btn-save" @onclick="ChangeStateToAddMode">Agregar</button>
+                <input type="number" name="TipoID" id="TipoID" placeholder="Instroduce un ID para editar la cuenta"
+                    @bind=@servicio_id required>
+                <button class="btn btn-edit" @onclick="ChangeStateToEditMode">Editar</button>
+                <button class="btn" @onclick="FindServicio">Filtrar</button>
+            </div>
+        </div>
+        <Datagrind table=@ServiciosTable></Datagrind>
+
+        @if (AddMode == true)
+        {
+            <div class="form-outline mb-4">
+                <label class="form-label" for="form2Example17">Nombre</label>
+                <input @bind=@nombre maxlength="120" type="text" id="form2Example17" class="form-control form-control-lg"
+                placeholder="Escribe un nombre para el servicio" />
+            </div>
+            <div class="form-outline mb-4">
+                <label class="form-label" for="form2Example17">precio</label>
+                <input @bind=@precio maxlength="120" type="number" id="form2Example17" class="form-control form-control-lg"
+                placeholder="Escribe un nombre para el estado" />
+            </div>
+            <form>
+                <div class="md-form">
+                    <label for="form7">Descripción</label>
+                    <textarea @bind=@descripcion maxlength="120" id="form7" class="md-textarea form-control" rows="3"
+                    placeholder="Escribe una descripción para el estado"></textarea>
+                </div>
+                @if (EditMode == false)
+                {
+                    <button class="btn btn-save" @onclick="SaveTipoServicio">Agregar</button>
+                }
+                else
+                {
+                    <button class="btn btn-edit" @onclick="UpdateTipoDeServicio">Guardar cambios</button>
+                }
+                <button class="btn btn-secondary" type="reset"> Limpiar </button>
+                <button class="btn btn-delete" @onclick="CancelarModo"> Cancelar </button>
+            </form>
+        }
+    </div>
+</div>
+
+@code {
+    bool AddMode = false;
+    bool EditMode = false;
+    System.Data.DataTable ServiciosTable = new System.Data.DataTable();
+    string descripcion = "";
+    int servicio_id;
+    string nombre = "";
+    System.Double precio;
+
+    void ChangeStateToAddMode(){
+        AddMode = !AddMode;
+    }
+
+    void ChangeStateToEditMode(){
+        if(servicio_id <= 0){
+            return;
+        }
+        try{
+            System.Data.DataTable table = dbaccess.ReadDataThroughtAdapter($"SELECT * FROM Servicios WHERE codigo = {servicio_id}");
+            nombre = table.Rows[0]["servicio"].ToString();
+            precio = Convert.ToDouble(table.Rows[0]["precio"].ToString());
+            descripcion = table.Rows[0]["descripcion"].ToString();
+            AddMode = !AddMode;
+            EditMode = !EditMode;
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+
+    void CancelarModo(){
+        AddMode = false;
+        EditMode = false;
+    }
+
+    void SaveTipoServicio()
+    {
+        if(nombre == "" || descripcion=="" || precio <= 0){
+            return;
+        }
+
+        try{
+            MySqlCommand command = new MySqlCommand("INSERT INTO Servicios(servicio,precio,descripcion) VALUES (@m_servicio,@m_precio,@m_descripcion);");
+            command.Parameters.AddWithValue("@m_servicio",nombre);
+            command.Parameters.AddWithValue("@m_precio",precio);
+            command.Parameters.AddWithValue("@m_descripcion",descripcion);
+
+            if(dbaccess.ExecuteQuery(command) != -1){
+                Console.WriteLine("Servicio registrada correctamente");
+            }
+        }catch{
+            Console.WriteLine("Error al momento de registrar la Servicio");
+        } 
+    AddMode = !AddMode;
+
+    }
+
+    void UpdateTipoDeServicio()
+    {
+        if(nombre == "" || descripcion=="" || precio <= 0 || servicio_id <= 0){
+            return;
+        }
+
+        try{
+            MySqlCommand command = new MySqlCommand("UPDATE Servicios SET servicio=@m_servicio, precio=@m_precio, descripcion=@m_descripcion WHERE codigo=@m_id;");
+            command.Parameters.AddWithValue("@m_servicio",nombre);
+            command.Parameters.AddWithValue("@m_precio",precio);
+            command.Parameters.AddWithValue("@m_descripcion",descripcion);
+            command.Parameters.AddWithValue("@m_id",servicio_id);
+
+            if(dbaccess.ExecuteQuery(command) != -1){
+                Console.WriteLine("Servicio registrada correctamente");
+            }
+        }catch{
+            Console.WriteLine("Error al momento de registrar la Servicio");
+        } 
+        AddMode = !AddMode;
+        EditMode = !EditMode;
+    }
+
+    void FindServicio(){
+        try{
+            ServiciosTable = dbaccess.ReadDataThroughtAdapter($"SELECT codigo AS Codigo, servicio AS Servicio,precio AS Precio, descripcion AS Descripcion FROM Servicios WHERE codigo={servicio_id}");
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+
+    protected async override Task OnInitializedAsync(){
+        try{
+            ServiciosTable = dbaccess.ReadDataThroughtAdapter("SELECT codigo AS Codigo, servicio AS Servicio,precio AS Precio, descripcion AS Descripcion FROM Servicios");
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+}

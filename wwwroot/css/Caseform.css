@@ -1,0 +1,55 @@
+.container{
+    max-width: 600px;
+    width: 100%;
+    background: #fff;
+    padding: 25px 25px;
+    border-radius: 10px;
+    display: block;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 7px 25px #000000;
+
+}
+
+.container .title{
+    font-size: 25px;
+    font-weight: 600;
+}
+
+form{
+    width: 100%;
+    max-width: 600px;
+}
+
+.container .content {
+    position: relative;
+    padding: 10px;
+}
+
+.container .content label{
+    width: 90%;
+    max-width: 500px;
+    margin: 5px;
+    font-weight: 600;
+
+}
+
+select{
+    width: 90%;
+    margin: 5px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+textarea{
+    max-width: 500px;
+    min-width: 500px;
+    max-height: 300px;
+    min-height: 300px;
+}
+
+input{
+    width: 90%;
+    margin: 5px;
+    padding: 10px;
+}

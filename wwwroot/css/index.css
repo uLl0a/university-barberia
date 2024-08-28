@@ -1,0 +1,122 @@
+.cardBox{
+    position: relative;
+    width: 100%;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(3,2fr);
+    grid-gap: 30px;
+}
+
+.cardBox .card{
+    position: relative;
+    background: #38761d;
+    padding: 30px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+    box-shadow: 0 7px 25px #000000;
+    background-color: #f7f7f7;
+}
+
+.cardBox .card .card-number{
+    position: relative;
+    font-weight: 500;
+    font-size: 2.5em;
+    color: #394f8a;
+}
+
+.cardBox .card .card-name{
+    color: #A0AECD;
+    font-size: 1.1em;
+}
+
+.cardBox .card .card-icon{
+    font-size: 3.0em;
+    color: #A0AECD;
+}
+
+.cardBox .card:hover{
+    background: #000000;
+}
+
+.container{
+    position: relative;
+    width: 100%;
+    padding: 20px;
+    display: grid;
+}
+
+.container .recents{
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(50rem, 1fr));
+    background: #f7f7f7;
+    padding: 20px;
+    box-shadow: 0 7px 25px #000000;
+    border-radius: 20px;
+    cursor: text;
+}
+
+.cases-card-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.cases-card-header h2{
+    font-weight: 600;
+    color: #394f8a;
+}
+
+.container table{
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.container table thead td {
+    font-weight: 600;
+}
+
+.container .recents table tr {
+    color: #000000;
+    border-bottom: 1px solid #A0AECD;
+}
+
+.container .recents table tbody tr:hover{
+    background: #A0AECD;
+    color: #000000;
+}
+
+.container .recents table tr td:last-child{
+    text-align: end;
+}
+
+a:hover{
+    text-decoration: none;
+}
+
+.btn{ 
+  text-decoration: none;
+  margin: 5px;
+  background-color: grey;
+  color: #f7f7f7;
+  border-radius: 10px;
+}
+
+.btn-save{
+    background-color: #4bac3f;
+}
+
+.btn-edit{
+    background-color: #11abc1;
+}
+
+.btn-showAll{
+   background-color: #394f8a;
+}
+
+.btn-delete{
+    background-color: #f00;
+}

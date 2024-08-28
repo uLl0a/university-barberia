@@ -1,0 +1,221 @@
+@page "/Empleados"
+@using MySql.Data.MySqlClient;
+@using System.Collections;
+
+@if(AddMode == true){
+
+    <link rel="stylesheet" href="css/Caseform.css">
+    <div class="container">
+        @{
+        if(EditMode == true){
+            <div class="title">Actualizar la informacion del empleado</div>
+        }else{
+            <div class="title"> Registrar un nuevo empleado</div>
+        }
+        }
+        <form action="Empleados" method="get">
+            <div class="content">
+                <div>
+                    <label for="nombre">Nombre completo</label>
+                    <input maxlength="80" type="text" name="nombre" id="nombre" placeholder="Nombre del cliente" @bind=@nombre_completo required>
+                </div>
+                <div>
+                    <label for="nombre">Cedula</label>
+                    <input maxlength="80" type="text" name="nombre" id="nombre" placeholder="Cedula del empleado" @bind=@cedula required>
+                </div>
+                <div>
+                    <label for="telefono">Número de telefono</label>
+                    <input maxlength="30" type="tel" name="telefono" id="telefono" placeholder="Número de telefono del cliente" @bind=@telefono required>
+                </div>
+                <div>
+                    <label for="celular">Número de celular</label>
+                    <input maxlength="30" type="tel" name="celular" id="celular" placeholder="Número de celular del cliente" @bind=@celular required>
+                </div>
+                <div>
+                    <label for="correo">Correo electronico</label>
+                    <input maxlength="120" type="email" name="correo" id="correo" placeholder="Correo electronico del cliente" @bind=@email required>
+                </div>
+                <div>
+                    <label for="direccion">Dirección del cliente</label>
+                    <input maxlength="120" type="text" name="direccion" id="direccion" placeholder="Dirección del cliente" @bind=@direccion required>
+                </div>
+                    <div>
+                        <label for="estado">Estado del empleado</label>
+                        <select name="estado" id="estado" @bind=@estado required>
+                        @for (int i = 0; i < Estados.Count; i++)
+                        {
+                            int index = i + 1;
+                                <option label=@Estados[i] value=@index></option>
+                        }
+                        </select>
+                </div>
+                <div>
+                    <label for="date">Fecha de ingreso</label>
+                    <input type="date" name="date" id="date" @bind=@fecha required>
+                </div>
+                    <div>
+                        <label for="cargo">Cargo del empleado</label>
+                        <select name="cargo" id="cargo" @bind=@cargo required>
+                        @for (int i = 0; i < Cargos.Count; i++)
+                        {
+                            int index = i + 1;
+                                <option label=@Cargos[i] value=@index></option>
+                        }
+                        </select>
+                </div>
+            </div>
+            <div style="text-align:center;width: 300px;margin: 2% auto;">
+                <button class="btn btn-secondary" type="reset"> Limpiar </button>
+                @{
+                    if(EditMode == true){
+                        <button class="btn btn-primary" type="submit" @onclick="UpdateClient">Guardar</button>
+                    }else{
+                        <button class="btn btn-success" type="submit" @onclick="SubmitClient"> Registrar </button>
+                    }
+                }
+                <button class="btn btn-danger" @onclick="CancelarModo"> Cancelar </button>
+            </div>
+        </form>
+    </div>
+}else {
+<link rel="stylesheet" href="css/index.css">
+<div class="container">
+    <div class="recents">
+        <div class="cases-card-header">
+            <h2>Historial de empleados</h2>
+            <div class="btnBar">
+                    <button class="btn btn-save" @onclick="ChangeStateToAddMode">Agregar</button>
+                    <input type="number" name="ClienteID" id="ClienteID" placeholder="Instroduce un ID para editar o eliminar el registro" @bind=@empleado_id required>
+                    <button class="btn btn-edit" @onclick="ChangeStateToEditMode">Editar</button>
+                    <button class="btn" @onclick="FindClient">Filtrar</button>
+            </div>
+        </div>
+        <Datagrind table=@EmpleadosTable></Datagrind>
+    </div>
+</div>
+}
+@code{
+    bool AddMode = false;
+    bool EditMode = false;
+    System.Data.DataTable EmpleadosTable = new System.Data.DataTable();
+    System.Collections.ArrayList Estados = new ArrayList();
+    System.Collections.ArrayList Cargos = new ArrayList();
+    int empleado_id;
+    string nombre_completo;
+    string cedula;
+    string telefono;
+    string celular;
+    string email;
+    string direccion;
+    DateTime fecha;
+    int cargo;
+    int estado;
+
+    void ChangeStateToAddMode(){
+        AddMode = !AddMode;
+    }
+
+    void CancelarModo(){
+        AddMode = false;
+        EditMode = false;
+    }
+    void ChangeStateToEditMode(){
+        if(empleado_id <= 0){
+            return;
+        }
+        try{
+            System.Data.DataTable table = dbaccess.ReadDataThroughtAdapter($"SELECT * FROM Empleados WHERE id = {empleado_id}");
+            nombre_completo = table.Rows[0]["nombre"].ToString();
+            cedula = table.Rows[0]["cedula"].ToString();
+            telefono = table.Rows[0]["telefono"].ToString();
+            celular = table.Rows[0]["celular"].ToString();
+            email = table.Rows[0]["email"].ToString();
+            direccion = table.Rows[0]["direccion"].ToString();
+            fecha = DateTime.Parse(table.Rows[0]["fecha_inicio"].ToString());
+            estado = (int)Convert.ChangeType(table.Rows[0]["estado"].ToString(),(typeof(int)));
+            cargo = (int)Convert.ChangeType(table.Rows[0]["cargo"].ToString(),(typeof(int)));
+            AddMode = !AddMode;
+            EditMode = !EditMode;
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+
+    protected async override Task OnInitializedAsync(){
+        try{
+            EmpleadosTable = dbaccess.ReadDataThroughtAdapter("SELECT Empleados.id AS ID, Empleados.cedula AS Cedula, Empleados.nombre AS 'Nombre completo', Empleados.telefono AS Telefono, Empleados.celular AS Celular, Empleados.email AS Email,Cargos.cargo AS Cargo, Estadosnomina.nombre AS Estado, Empleados.direccion AS Direccion, fecha_inicio AS 'Fecha de ingreso' FROM Empleados, Estadosnomina, Cargos WHERE Empleados.cargo = Cargos.id AND Empleados.estado = Estadosnomina.id;");
+            Cargos = dbaccess.GetListFromDataBase("SELECT cargo FROM Cargos;", "cargo");
+            Estados = dbaccess.GetListFromDataBase("SELECT nombre FROM Estadosnomina;", "nombre");
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+
+    void FindClient(){
+        if(empleado_id <= 0){
+            return;
+        }
+        try{
+            EmpleadosTable = dbaccess.ReadDataThroughtAdapter($"SELECT Empleados.id AS ID, Empleados.cedula AS Cedula, Empleados.nombre AS 'Nombre completo', Empleados.telefono AS Telefono, Empleados.celular AS Celular, Empleados.email AS Email,Cargos.cargo AS Cargo, Estadosnomina.nombre AS Estado, Empleados.direccion AS Direccion, fecha_inicio AS 'Fecha de ingreso' FROM Empleados, Estadosnomina, Cargos WHERE Empleados.cargo = Cargos.id AND Empleados.estado = Estadosnomina.id AND Empleados.id = {empleado_id};");
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+
+    void SubmitClient(){
+        if(nombre_completo == "" || telefono == "" || celular == "" || email == "" || direccion == "" || cargo <= 0 || estado <= 0){
+            return;
+        }
+
+        try{
+            MySqlCommand command = new MySqlCommand("INSERT INTO Empleados(cedula,nombre,telefono,celular,email,fecha_inicio,direccion,estado,cargo) VALUES (@m_cedula,@m_nombre_completo,@m_telefono,@m_celular,@m_email,@m_fecha,@m_direccion,@m_estado,@m_cargo)");
+            command.Parameters.AddWithValue("@m_cedula",cedula);
+            command.Parameters.AddWithValue("@m_nombre_completo",nombre_completo);
+            command.Parameters.AddWithValue("@m_telefono",telefono);
+            command.Parameters.AddWithValue("@m_celular",celular);
+            command.Parameters.AddWithValue("@m_email",email);
+            command.Parameters.AddWithValue("@m_fecha",fecha);
+            command.Parameters.AddWithValue("@m_direccion",direccion);
+            command.Parameters.AddWithValue("@m_estado",estado);
+            command.Parameters.AddWithValue("@m_cargo",cargo);
+
+            if(dbaccess.ExecuteQuery(command) != -1){
+                Console.WriteLine("Cita registrada correctamente");
+            }
+        }catch{
+            Console.WriteLine("Error al momento de registrar la cita");
+        } 
+    AddMode = !AddMode;
+
+    }
+
+    void UpdateClient(){
+        if(nombre_completo == "" || telefono == "" || celular == "" || email == "" || direccion == ""){
+            return;
+        }
+
+        try{
+            MySqlCommand command = new MySqlCommand("UPDATE Empleados SET cedula=@m_cedula, nombre=@m_nombre_completo, telefono=@m_telefono, celular=@m_celular,email=@m_email, fecha_inicio=@m_fecha, direccion=@m_direccion, estado=@m_estado, cargo=@m_cargo WHERE id=@m_id;");
+            command.Parameters.AddWithValue("@m_cedula",cedula);
+            command.Parameters.AddWithValue("@m_nombre_completo",nombre_completo);
+            command.Parameters.AddWithValue("@m_telefono",telefono);
+            command.Parameters.AddWithValue("@m_celular",celular);
+            command.Parameters.AddWithValue("@m_email",email);
+            command.Parameters.AddWithValue("@m_fecha",fecha);
+            command.Parameters.AddWithValue("@m_direccion",direccion);
+            command.Parameters.AddWithValue("@m_estado",estado);
+            command.Parameters.AddWithValue("@m_cargo",cargo);
+            command.Parameters.AddWithValue("@m_id",empleado_id);
+
+            if(dbaccess.ExecuteQuery(command) != -1){
+                Console.WriteLine("Cita registrada correctamente");
+            }
+        }catch{
+            Console.WriteLine("Error al momento de registrar la cita");
+        } 
+    AddMode = !AddMode;
+    EditMode = !EditMode;
+
+    }
+
+}

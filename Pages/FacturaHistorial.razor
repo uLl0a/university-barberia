@@ -1,0 +1,108 @@
+@page "/Factura/historial"
+@using System.Collections;
+@using MySql.Data.MySqlClient;
+
+<link rel="stylesheet" href="css/index.css">
+<div class="container">
+    <div class="recents">
+        <div class="cases-card-header">
+            <h2>Historial de facturas</h2>
+            <div class="btnBar">
+                <input type="number" name="TipoID" id="TipoID" placeholder="Instroduce un ID para editar la cuenta"
+                    @bind=@factura_id required>
+                <button class="btn btn-edit" @onclick="ChangeStateToEditMode">Editar</button>
+                <button class="btn" @onclick="FindServicio">Filtrar</button>
+            </div>
+        </div>
+        <Datagrind table=@FacturaTable></Datagrind>
+
+        @if (AddMode == true)
+        {
+            <div>
+                <label for="factura">Cambiar estado de la factura</label>
+                <select name="factura" id="factura" @bind=@estado required>
+                @for (int i = 0; i < Estados.Count; i++)
+                {   
+                    int index = i + 1;
+                    <option label=@Estados[i] value=@index></option>
+                }
+                </select>
+            </div>
+            <form>
+                    <button class="btn btn-edit" @onclick="UpdateTipoDeServicio">Guardar cambios</button>
+                <button class="btn btn-secondary" type="reset"> Limpiar </button>
+                <button class="btn btn-delete" @onclick="CancelarModo"> Cancelar </button>
+            </form>
+        }
+    </div>
+</div>
+
+@code {
+    bool AddMode = false;
+    bool EditMode = false;
+    System.Data.DataTable FacturaTable = new System.Data.DataTable();
+    System.Collections.ArrayList Estados = new ArrayList();
+    int factura_id;
+    int estado;
+
+    void ChangeStateToAddMode(){
+        AddMode = !AddMode;
+    }
+
+    void ChangeStateToEditMode(){
+        if(factura_id <= 0){
+            return;
+        }
+        try{
+            System.Data.DataTable table = dbaccess.ReadDataThroughtAdapter($"SELECT * FROM Factura WHERE codigo = {factura_id}");
+            estado = (int)Convert.ChangeType(table.Rows[0]["estado"].ToString(), (typeof(int)));
+            AddMode = !AddMode;
+            EditMode = !EditMode;
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+
+    void CancelarModo(){
+        AddMode = false;
+        EditMode = false;
+    }
+
+    void UpdateTipoDeServicio()
+    {
+        if(factura_id <= 0 || estado <= 0){
+            return;
+        }
+
+        try{
+            MySqlCommand command = new MySqlCommand("UPDATE Factura SET estado=@m_estado WHERE codigo=@m_id;");
+            command.Parameters.AddWithValue("@m_estado",estado);
+            command.Parameters.AddWithValue("@m_id",factura_id);
+
+            if(dbaccess.ExecuteQuery(command) != -1){
+                Console.WriteLine("Servicio registrada correctamente");
+            }
+        }catch{
+            Console.WriteLine("Error al momento de registrar la Servicio");
+        } 
+        AddMode = !AddMode;
+        EditMode = !EditMode;
+    }
+
+    void FindServicio(){
+        try{
+            FacturaTable = dbaccess.ReadDataThroughtAdapter($"SELECT Factura.codigo AS 'Numero de factura', Clientes.nombre AS Cliente, EstadoFactura.nombre FROM Clientes, EstadoFactura, Factura WHERE Clientes.id = Factura.cliente AND EstadoFactura.id = Factura.estado AND Factura.codigo={factura_id}");
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+
+    protected async override Task OnInitializedAsync(){
+        try{
+            FacturaTable = dbaccess.ReadDataThroughtAdapter("SELECT Factura.codigo AS 'Numero de factura', Clientes.nombre AS Cliente, EstadoFactura.nombre AS 'Estado de la factura' FROM Clientes, EstadoFactura, Factura WHERE Clientes.id = Factura.cliente AND EstadoFactura.id = Factura.estado");
+            Estados = dbaccess.GetListFromDataBase("SELECT nombre FROM EstadoFactura;", "nombre");
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+}

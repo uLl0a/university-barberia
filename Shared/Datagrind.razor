@@ -1,0 +1,30 @@
+@using System.Data;
+<link rel="stylesheet" href="css/index.css">
+<table>
+    <thead>
+        <tr>
+            @foreach (System.Data.DataColumn column in table.Columns)
+            {
+                <td>@column.ColumnName</td>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (System.Data.DataRow row in table.Rows)
+        {
+            <tr>
+                @foreach (System.Data.DataColumn column in table.Columns)
+                {
+                    <td>@row[column.ColumnName].ToString()</td>
+                }
+
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+
+    [Parameter]
+    public DataTable table {get; set;}
+}

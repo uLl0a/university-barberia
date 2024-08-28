@@ -1,0 +1,91 @@
+DROP DATABASE IF EXISTS BarberShopDB;
+CREATE DATABASE BarberShopDB;
+USE BarberShopDB;
+
+CREATE TABLE Cargos(
+	id TINYINT AUTO_INCREMENT NOT NULL,
+	cargo TINYTEXT NOT NULL,
+	PRIMARY KEY(id)
+);
+
+CREATE TABLE EstadosNomina(
+	id INT AUTO_INCREMENT NOT NULL,
+	nombre TINYTEXT NOT NULL,
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE Empleados (
+	id INT AUTO_INCREMENT NOT NULL,
+	cedula VARCHAR(20) UNIQUE NOT NULL,
+	nombre TINYTEXT NOT NULL,
+	telefono VARCHAR(20),
+	celular VARCHAR(20),
+	email TINYTEXT,
+	fecha_inicio DATE NOT NULL,
+	direccion TINYTEXT NOT NULL,
+	estado INT NOT NULL,
+	cargo TINYINT NOT NULL,
+	FOREIGN KEY (estado) REFERENCES EstadosNomina(id),
+	FOREIGN KEY (cargo) REFERENCES Cargos(id),
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE Clientes(
+	id INT AUTO_INCREMENT NOT NULL,
+	nombre TINYTEXT NOT NULL,
+	telefono VARCHAR(20),
+	celular VARCHAR(20),
+	email TINYTEXT,
+	direccion TINYTEXT NOT NULL,
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE Estadoscitas(
+	id INT AUTO_INCREMENT NOT NULL,
+	nombre TINYTEXT NOT NULL,
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE Citas(
+	id INT AUTO_INCREMENT NOT NULL,
+	cliente INT NOT NULL,
+	empleado INT NOT NULL,
+	fecha DATETIME NOT NULL,
+	estado INT NOT NULL,
+	FOREIGN KEY (cliente) REFERENCES Clientes(id),
+	FOREIGN KEY (estado)	REFERENCES Estadoscitas(id),
+	FOREIGN KEY (empleado) REFERENCES Empleados(id),
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE Servicios(
+	codigo INT AUTO_INCREMENT NOT NULL,
+	servicio TINYTEXT NOT NULL,
+	precio FLOAT NOT NULL,
+	descripcion TEXT,
+	PRIMARY KEY (codigo)
+);
+
+CREATE TABLE EstadoFactura(
+	id INT AUTO_INCREMENT NOT NULL,
+	nombre TINYTEXT NOT NULL,
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE Factura(
+	codigo INT AUTO_INCREMENT NOT NULL,
+	cliente INT NOT NULL,
+	estado INT NOT NULL,
+	FOREIGN KEY(estado) REFERENCES EstadoFactura(id),
+	FOREIGN KEY (cliente) REFERENCES Clientes(id),
+	PRIMARY KEY(codigo)
+);
+
+CREATE TABLE Credenciales(
+	id INT AUTO_INCREMENT NOT NULL,
+	empleado INT NOT NULL,
+	usuario TEXT NOT NULL,
+	pasw TEXT NOT NULL,
+	FOREIGN KEY (empleado) REFERENCES Empleados(id),
+	PRIMARY KEY(id)
+);

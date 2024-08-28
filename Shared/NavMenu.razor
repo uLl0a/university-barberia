@@ -1,0 +1,68 @@
+﻿@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage ProtectedSessionStore
+@inject NavigationManager NavigationManager
+
+<img src="/img/th-2281550830.jpg" width="250" height="80"/>
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="/Dashboard" Match="NavLinkMatch.All">
+                <span class="oi oi-dashboard" aria-hidden="true"></span> Dashboard
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="/Clientes">
+                <span class="oi oi-people" aria-hidden="true"></span> Clientes
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="/Citas">
+                <span class="oi oi-bookmark" aria-hidden="true"></span> Citas
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="/FacturaOpciones">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Facturas
+            </NavLink>
+        </li>
+         <li class="nav-item px-3">
+            <NavLink class="nav-link" href="Empleados">
+                <span class="oi oi-person" aria-hidden="true"></span> Empleados
+            </NavLink>
+        </li>
+         <li class="nav-item px-3">
+            <NavLink class="nav-link" href="Servicios">
+                <span class="oi oi-box" aria-hidden="true"></span> Servicios
+            </NavLink>
+        </li>
+         <li class="nav-item px-3">
+            <NavLink class="nav-link" style="cursor: pointer" @onclick="LogOut">
+                    <span @onclick="LogOut" class="oi oi-account-logout" aria-hidden="true"></span> Cerrar sección
+            </NavLink>
+         </li>
+    </ul>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private string user;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        user = (await ProtectedSessionStore.GetAsync<string>("UsuarioUsername")).Value ?? "";
+        StateHasChanged();
+    }
+
+    private async Task LogOut(){
+        await ProtectedSessionStore.DeleteAsync("UsuarioID");
+        await ProtectedSessionStore.DeleteAsync("UsuarioUsername");          
+        NavigationManager.NavigateTo("/");
+    }
+}

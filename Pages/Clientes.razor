@@ -1,0 +1,175 @@
+@page "/Clientes"
+@using MySql.Data.MySqlClient;
+@using System.Collections;
+
+@if(AddMode == true){
+
+    <link rel="stylesheet" href="css/Caseform.css">
+    <div class="container">
+        @{
+        if(EditMode == true){
+            <div class="title">Actualizar la informacion del cliente</div>
+        }else{
+            <div class="title"> Registrar un nuevo cliente</div>
+        }
+        }
+        <form action="Clientes" method="get">
+            <div class="content">
+                <div>
+                    <label for="nombre">Nombre completo</label>
+                    <input maxlength="80" type="text" name="nombre" id="nombre" placeholder="Nombre del cliente" @bind=@nombre_completo required>
+                </div>
+                <div>
+                    <label for="telefono">Número de telefono</label>
+                    <input maxlength="30" type="tel" name="telefono" id="telefono" placeholder="Número de telefono del cliente" @bind=@telefono required>
+                </div>
+                <div>
+                    <label for="celular">Número de celular</label>
+                    <input maxlength="30" type="tel" name="celular" id="celular" placeholder="Número de celular del cliente" @bind=@celular required>
+                </div>
+                <div>
+                    <label for="correo">Correo electronico</label>
+                    <input maxlength="120" type="email" name="correo" id="correo" placeholder="Correo electronico del cliente" @bind=@email required>
+                </div>
+                <div>
+                    <label for="direccion">Dirección del cliente</label>
+                    <input maxlength="120" type="text" name="direccion" id="direccion" placeholder="Dirección del cliente" @bind=@direccion required>
+                </div>
+                <div>
+                </div>
+            </div>
+            <div style="text-align:center;width: 300px;margin: 2% auto;">
+                <button class="btn btn-secondary" type="reset"> Limpiar </button>
+                @{
+                    if(EditMode == true){
+                        <button class="btn btn-primary" type="submit" @onclick="UpdateClient">Guardar</button>
+                    }else{
+                        <button class="btn btn-success" type="submit" @onclick="SubmitClient"> Registrar </button>
+                    }
+                }
+                <button class="btn btn-danger" @onclick="CancelarModo"> Cancelar </button>
+            </div>
+        </form>
+    </div>
+}else {
+<link rel="stylesheet" href="css/index.css">
+<div class="container">
+    <div class="recents">
+        <div class="cases-card-header">
+            <h2>Historial de clientes</h2>
+            <div class="btnBar">
+                    <button class="btn btn-save" @onclick="ChangeStateToAddMode">Agregar</button>
+                    <input type="number" name="ClienteID" id="ClienteID" placeholder="Instroduce un ID para editar o eliminar el registro" @bind=@cliente_id required>
+                    <button class="btn btn-edit" @onclick="ChangeStateToEditMode">Editar</button>
+                    <button class="btn" @onclick="FindClient">Filtrar</button>
+            </div>
+        </div>
+        <Datagrind table=@ClientesTable></Datagrind>
+    </div>
+</div>
+}
+@code{
+    bool AddMode = false;
+    bool EditMode = false;
+    System.Data.DataTable ClientesTable = new System.Data.DataTable();
+    int cliente_id;
+    string nombre_completo;
+    string telefono;
+    string celular;
+    string email;
+    string direccion;
+
+    void ChangeStateToAddMode(){
+        AddMode = !AddMode;
+    }
+
+    void CancelarModo(){
+        AddMode = false;
+        EditMode = false;
+    }
+    void ChangeStateToEditMode(){
+        if(cliente_id <= 0){
+            return;
+        }
+        try{
+            System.Data.DataTable table = dbaccess.ReadDataThroughtAdapter($"SELECT * FROM Clientes WHERE id = {cliente_id}");
+            nombre_completo = table.Rows[0]["nombre"].ToString();
+            telefono = table.Rows[0]["telefono"].ToString();
+            celular = table.Rows[0]["celular"].ToString();
+            email = table.Rows[0]["email"].ToString();
+            direccion = table.Rows[0]["direccion"].ToString();
+            AddMode = !AddMode;
+            EditMode = !EditMode;
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+
+    protected async override Task OnInitializedAsync(){
+        try{
+            ClientesTable = dbaccess.ReadDataThroughtAdapter("SELECT id AS ID, nombre AS 'Nombre completo', telefono AS Telefono, celular AS Celular, email AS Email, direccion AS Direccion FROM Clientes ORDER BY ID");
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+
+    void FindClient(){
+        if(cliente_id <= 0){
+            return;
+        }
+        try{
+            ClientesTable = dbaccess.ReadDataThroughtAdapter($"SELECT id AS ID, nombre AS 'Nombre completo', telefono AS Telefono, celular AS Celular, email AS Email, direccion AS Direccion FROM Clientes WHERE ID={cliente_id}");
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+
+    void SubmitClient(){
+        if(nombre_completo == "" || telefono == "" || celular == "" || email == "" || direccion == ""){
+            return;
+        }
+
+        try{
+            MySqlCommand command = new MySqlCommand("INSERT INTO Clientes(nombre,telefono,celular,email,direccion) VALUES (@m_nombre_completo,@m_telefono,@m_celular,@m_email,@m_direccion)");
+            command.Parameters.AddWithValue("@m_nombre_completo",nombre_completo);
+            command.Parameters.AddWithValue("@m_telefono",telefono);
+            command.Parameters.AddWithValue("@m_celular",celular);
+            command.Parameters.AddWithValue("@m_email",email);
+            command.Parameters.AddWithValue("@m_direccion",direccion);
+
+            if(dbaccess.ExecuteQuery(command) != -1){
+                Console.WriteLine("Cita registrada correctamente");
+            }
+        }catch{
+            Console.WriteLine("Error al momento de registrar la cita");
+        } 
+    AddMode = !AddMode;
+
+    }
+
+    void UpdateClient(){
+        if(nombre_completo == "" || telefono == "" || celular == "" || email == "" || direccion == ""){
+            return;
+        }
+
+        try{
+            MySqlCommand command = new MySqlCommand("UPDATE Clientes SET nombre=@m_nombre_completo, telefono=@m_telefono, celular=@m_celular,email=@m_email,direccion=@m_direccion WHERE id=@m_id;");
+            command.Parameters.AddWithValue("@m_nombre_completo",nombre_completo);
+            command.Parameters.AddWithValue("@m_telefono",telefono);
+            command.Parameters.AddWithValue("@m_celular",celular);
+            command.Parameters.AddWithValue("@m_email",email);
+            command.Parameters.AddWithValue("@m_direccion",direccion);
+            command.Parameters.AddWithValue("@m_id",cliente_id);
+
+            if(dbaccess.ExecuteQuery(command) != -1){
+                Console.WriteLine("Cita registrada correctamente");
+            }
+        }catch{
+            Console.WriteLine("Error al momento de registrar la cita");
+        } 
+    AddMode = !AddMode;
+    EditMode = !EditMode;
+
+    }
+
+}

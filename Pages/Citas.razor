@@ -1,0 +1,189 @@
+@page "/Citas"
+@using System.Collections;
+@using MySql.Data.MySqlClient;
+
+@if(AddMode == true){
+
+    <link rel="stylesheet" href="css/Caseform.css">
+    <div class="container">
+        @{
+        if(EditMode == true){
+            <div class="title"> Editar cita #@cita_id</div>
+        }else{
+            <div class="title"> Registrar una nueva cita</div>
+        }
+        }
+        <form action="Citas" method="get">
+            <div class="content">
+        @if(AddMode == true && EditMode == false){
+            <div>
+                <label for="cliente_id">Cliente</label>
+                <select @bind=@cliente_id required>
+                @for (int i = 0; i < Clientes.Count; i++)
+                {   
+                    int index = i + 1;
+                    <option label=@Clientes[i] value=@index></option>
+                }
+                </select>
+            </div>
+            <div>
+                <label for="empleado_id">Empleado</label>
+                <select name="empleado_id" id="empleado_id" @bind=@empleado_id required>
+                @for (int i = 0; i < Empleados.Count; i++)
+                {   
+                    int index = i + 1;
+                    <option label=@Empleados[i] value=@index></option>
+                }
+                </select>
+            </div>
+            }
+            </div>
+            <div class="content">
+                <label for="date">Fecha para la cita</label>
+                <input type="datetime" name="date" id="date" @bind=@fecha required>
+            </div>
+            <div class="content">
+                <label for="tipo_caso">Estado de la cita</label>
+                <select name="tipo_caso" id="tipo_caso" @bind=@estado_id required>
+                @for (int i = 0; i < Estados.Count; i++)
+                {   
+                    int index = i + 1;
+                    <option label=@Estados[i] value=@index></option>
+                }
+            </select>
+            </div>
+        <div style="text-align:center;width: 300px;margin: 2% auto;">
+                <button class="btn btn-secondary" type="reset"> Limpiar </button>
+                @{
+                    if(EditMode == true){
+                        <button class="btn btn-primary" type="submit" @onclick="UpdateCita">Guardar</button>
+                    }else{
+                        <button class="btn btn-success" type="submit" @onclick="SaveCita">Registrar</button>
+                    }
+                }
+                <button class="btn btn-danger" @onclick="CancelarModo"> Cancelar </button>
+            </div>
+        </form>
+    </div>
+
+}else {
+<link rel="stylesheet" href="css/index.css">
+<div class="container">
+    <div class="recents">
+        <div class="cases-card-header">
+            <h2>Historial de citas</h2>
+            <div class="btnBar">
+                    <button class="btn btn-save" @onclick="ChangeStateToAddMode">Agregar</button>
+                    <input type="number" name="CasoID" id="CasoID" placeholder="Instroduce un ID para editar o eliminar el registro" @bind=@cita_id required>
+                    <button class="btn btn-edit" @onclick="ChangeStateToEditMode">Editar</button>
+                    <button class="btn" @onclick="FindCita">Filtrar</button>
+            </div>
+        </div>
+        <Datagrind table=@CitasTable></Datagrind>
+    </div>
+    </div>
+}
+
+@code {
+    bool AddMode = false;
+    bool EditMode = false;
+    int cita_id = 0;
+    int cliente_id = 0;
+    int empleado_id = 0;
+    int estado_id = 0;
+    DateTime fecha;
+
+    System.Data.DataTable CitasTable = new System.Data.DataTable();
+    System.Collections.ArrayList Clientes = new ArrayList();
+    System.Collections.ArrayList Empleados = new ArrayList();
+    System.Collections.ArrayList Estados = new ArrayList();
+    void ChangeStateToAddMode(){
+        AddMode = !AddMode;
+    }
+
+    void ChangeStateToEditMode(){
+        if(cita_id <= 0){
+            return;
+        }
+        try{
+            System.Data.DataTable table = dbaccess.ReadDataThroughtAdapter($"SELECT * FROM Citas WHERE id = {cita_id}");
+            estado_id = (int)Convert.ChangeType(table.Rows[0]["estado"].ToString(), (typeof(int)));
+            fecha = DateTime.Parse(table.Rows[0]["fecha"].ToString());
+            AddMode = !AddMode;
+            EditMode = !EditMode;
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+
+    }
+
+    void CancelarModo(){
+        AddMode = false;
+        EditMode = false;
+    }
+
+    protected async override Task OnInitializedAsync(){
+        try{
+            CitasTable = dbaccess.ReadDataThroughtAdapter("SELECT Citas.id AS ID, empleados.nombre AS Empleado, clientes.nombre AS Cliente, Estadoscitas.nombre AS Estado, fecha AS 'Fecha y Hora' FROM clientes, Estadoscitas, citas, empleados WHERE empleados.id = citas.empleado AND clientes.id = citas.cliente AND Estadoscitas.id = Citas.estado;");
+            Clientes = dbaccess.GetListFromDataBase("SELECT nombre FROM Clientes;", "nombre");
+            Empleados = dbaccess.GetListFromDataBase("SELECT nombre FROM Empleados;", "nombre");
+            Estados = dbaccess.GetListFromDataBase("SELECT nombre FROM Estadoscitas;", "nombre");
+        }catch(Exception e){
+            Console.WriteLine(e);
+        }
+    }
+
+    void SaveCita()
+    {
+        if(estado_id <= 0 || cliente_id <= 0 || empleado_id <= 0)
+        {
+            return;
+        }
+
+        try{
+            MySqlCommand command = new MySqlCommand("INSERT INTO Citas(cliente,empleado,fecha,estado) VALUES (@m_cliente_id,@m_empleado_id,@m_fecha,@m_estado_id);");
+            command.Parameters.AddWithValue("@m_cliente_id",cliente_id);
+            command.Parameters.AddWithValue("@m_empleado_id",empleado_id);
+            command.Parameters.AddWithValue("@m_fecha",fecha);
+            command.Parameters.AddWithValue("@m_estado_id",estado_id);
+
+            if(dbaccess.ExecuteQuery(command) != -1){
+                Console.WriteLine("Cita registrada correctamente");
+            }
+        }catch{
+            Console.WriteLine("Error al momento de registrar la cita");
+        } 
+    AddMode = !AddMode;
+    }
+
+    void UpdateCita()
+    {
+    if(estado_id <= 0)
+        {
+            return;
+        }
+
+        try{
+            MySqlCommand command = new MySqlCommand("UPDATE Citas SET estado=@m_estado_id, fecha=@m_fecha WHERE id=@m_id;");
+            command.Parameters.AddWithValue("@m_estado_id",estado_id);
+            command.Parameters.AddWithValue("@m_fecha",fecha);
+            command.Parameters.AddWithValue("@m_id",cita_id);
+
+            if(dbaccess.ExecuteQuery(command) != -1){
+                Console.WriteLine("Cita registrada correctamente");
+            }
+        }catch{
+            Console.WriteLine("Error al momento de registrar la cita");
+        } 
+    AddMode = !AddMode;
+    EditMode = !EditMode;
+    }
+
+    void FindCita(){
+        if(cita_id <=0){
+            return;
+        }
+        CitasTable = dbaccess.ReadDataThroughtAdapter($"SELECT Citas.id AS ID, empleados.nombre AS Empleado, clientes.nombre AS Cliente, Estadoscitas.nombre AS Estado, fecha AS 'Fecha y Hora' FROM clientes, Estadoscitas, citas, empleados WHERE empleados.id = citas.empleado AND clientes.id = citas.cliente AND Estadoscitas.id = Citas.estado AND Citas.id = {cita_id}");
+    }
+
+}
